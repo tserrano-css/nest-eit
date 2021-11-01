@@ -7,9 +7,9 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Post,
   Put,
-  Res,
 } from '@nestjs/common';
 import { Product } from './product.interface';
 import { ProductsService } from './products.service';
@@ -24,7 +24,13 @@ export class ProductsController {
   }
 
   @Get(':id')
-  find(@Param('id') id: number): Product {
+  find(
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
+    id: number,
+  ): Product {
     return this.productsService.getId(id);
   }
 
