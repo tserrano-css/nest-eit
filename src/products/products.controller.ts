@@ -10,6 +10,7 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { ProductDto } from './dto/product.dto';
 import { Product } from './product.interface';
 import { ProductsService } from './products.service';
 
@@ -34,12 +35,12 @@ export class ProductsController {
   }
 
   @Post()
-  create(@Body() body): Product {
+  create(@Body() body: ProductDto): Product {
     return this.productsService.insert(body);
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() body): Product {
+  update(@Param('id') id: number, @Body() body: ProductDto): Product {
     return this.productsService.update(id, body);
   }
 

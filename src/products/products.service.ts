@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ProductDto } from './dto/product.dto';
 import { Product } from './product.interface';
 
 @Injectable()
@@ -8,11 +9,13 @@ export class ProductsService {
       id: 1,
       name: 'Vela aromática',
       description: 'Esta vela lanza ricos olores',
+      stock: 0,
     },
     {
       id: 2,
       name: 'Marco de fotos pequeño',
       description: 'Marco ideal para tus fotos 10x15',
+      stock: 12,
     },
   ];
 
@@ -28,24 +31,26 @@ export class ProductsService {
     throw new NotFoundException('No puedo ');
   }
 
-  insert(body: any): Product {
+  insert(body: ProductDto): Product {
     this.products = [
       ...this.products,
       {
         id: this.lastId() + 1,
         name: body.name,
         description: body.description,
+        stock: body.stock,
       },
     ];
 
     return this.getId(this.lastId());
   }
 
-  update(id: number, body: any): Product {
+  update(id: number, body: ProductDto): Product {
     const product: Product = {
       id,
       name: body.name,
       description: body.description,
+      stock: body.stock,
     };
 
     this.products = this.products.map((item) => {
