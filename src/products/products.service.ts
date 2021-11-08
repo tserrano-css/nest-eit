@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ProductPatchDto } from './dto/product-patch.dto';
 import { ProductDto } from './dto/product.dto';
 import { Product } from './product.interface';
 
@@ -53,11 +54,28 @@ export class ProductsService {
       stock: body.stock,
     };
 
+    return this.updateObject(id, product);
+  }
+
+  private updateObject(id: number, product: Product) {
     this.products = this.products.map((item) => {
       return item.id == id ? product : item;
     });
 
     return this.getId(id);
+  }
+
+  patch(id: number, body: ProductPatchDto): Product {
+    const previousProduct = this.getId(id);
+
+    //això és que fa es possar en el newProduct tot ho de previousProduct i sobre escriure el que tingui en el body
+    const newProduct = {
+      ...previousProduct,
+      ...body,
+    }
+
+    return this.updateObject(id, newProduct);
+
   }
 
   delete(id: number): void {
