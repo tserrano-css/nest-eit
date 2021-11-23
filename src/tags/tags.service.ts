@@ -1,65 +1,55 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Tag } from './tag.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TagPatchDto } from './dto/tag-patch.dto';
+import { TagtDto } from './dto/tag.dto';
+import { Tag } from './entities/tag.entity';
 
 @Injectable()
 export class TagsService {
-  private tags: Tag[] = [
-    {
-      id: 1,
-      name: 'Muebles',
-      slug: 'muebles',
-    },
-    {
-      id: 2,
-      name: 'Accesorios',
-      slug: 'asccesorios',
-    },
-  ];
+  constructor(
+    @InjectRepository(Tag)
+    private tagRepository: Repository<Tag>,
+  ) {}
 
-  getAll(): Tag[] {
-    return this.tags;
+  getAll(): Promise<Tag[]> {
+    return this.tagRepository.find();
   }
 
-  getId(id: number): Tag {
-    const tag = this.tags.find((item) => item.id == id);
+  async getId(id: number): Promise<Tag> {
+    const tag = await this.tagRepository.findOne(id);
     if (tag) {
       return tag;
     }
-    throw new NotFoundException('No puedo ');
+    throw new NotFoundException('No puedo encontrar el tag');
   }
 
-  insert(body: any): Tag {
-    this.tags = [
-      ...this.tags,
-      {
-        id: this.lastId() + 1,
-        name: body.name,
-        slug: body.slug,
-      },
-    ];
-
-    return this.getId(this.lastId());
+  async insert(body: TagtDto): Promise<Tag> {
+    const tag = this.tagRepository.create(body);
+    await this.tagRepository.save(tag);
+    return tag;
   }
 
-  update(id: number, body: any): Tag {
-    const product: Tag = {
+  async update(id: number, body: TagtDto | TagPatchDto): Promise<Tag> {
+    const inputTag = {
       id,
-      name: body.name,
-      slug: body.slug,
+      ...body,
     };
+    const tag = await this.tagRepository.preload(inputTag);
 
-    this.tags = this.tags.map((item) => {
-      return item.id == id ? product : item;
-    });
+    if (tag) {
+      return this.tagRepository.save(tag);
+    }
 
-    return this.getId(id);
+    throw new NotFoundException(`No he encontrado el producto con id ${id}`);
   }
 
-  delete(id: number): void {
-    this.tags = this.tags.filter((item) => item.id != id);
-  }
+  async delete(id: number): Promise<void> {
+    const tag = await this.tagRepository.findOne(id);
 
-  private lastId(): number {
-    return this.tags[this.tags.length - 1].id;
+    if (tag) {
+      this.tagRepository.remove(tag);
+    }
+    throw new NotFoundException(`No se encontro el tag con id ${id}`);
   }
 }

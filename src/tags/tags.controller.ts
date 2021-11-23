@@ -8,7 +8,7 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { Tag } from './tag.interface';
+import { Tag } from './entities/tag.entity';
 import { TagsService } from './tags.service';
 
 @Controller('tags')
@@ -16,22 +16,22 @@ export class TagsController {
   constructor(private readonly tagsService: TagsService) {}
 
   @Get()
-  getAll(): Tag[] {
+  getAll(): Promise<Tag[]> {
     return this.tagsService.getAll();
   }
 
   @Get(':id')
-  find(@Param('id') id: number): Tag {
+  async find(@Param('id') id: number): Promise<Tag> {
     return this.tagsService.getId(id);
   }
 
   @Post()
-  create(@Body() body): Tag {
+  async create(@Body() body): Promise<Tag> {
     return this.tagsService.insert(body);
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() body): Tag {
+  async update(@Param('id') id: number, @Body() body): Promise<Tag> {
     return this.tagsService.update(id, body);
   }
 

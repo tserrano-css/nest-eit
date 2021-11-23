@@ -1,88 +1,58 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ProductPatchDto } from './dto/product-patch.dto';
 import { ProductDto } from './dto/product.dto';
-import { Product } from './product.interface';
+import { Product } from './entities/product.entity';
 
 @Injectable()
 export class ProductsService {
-  private products: Product[] = [
-    {
-      id: 1,
-      name: 'Vela aromática',
-      description: 'Esta vela lanza ricos olores',
-      stock: 0,
-    },
-    {
-      id: 2,
-      name: 'Marco de fotos pequeño',
-      description: 'Marco ideal para tus fotos 10x15',
-      stock: 12,
-    },
-  ];
+  constructor(
+    @InjectRepository(Product)
+    private productRepository: Repository<Product>,
+  ) {}
 
-  getAll(): Product[] {
-    return this.products;
+  getAll(): Promise<Product[]> {
+    return this.productRepository.find();
   }
 
-  getId(id: number): Product {
-    const product = this.products.find((item) => item.id == id);
+  async getId(id: number): Promise<Product> {
+    const product = await this.productRepository.findOne(id);
     if (product) {
       return product;
     }
-    throw new NotFoundException('No puedo ');
+    throw new NotFoundException('No puedo encontrar el producto');
   }
 
-  insert(body: ProductDto): Product {
-    this.products = [
-      ...this.products,
-      {
-        id: this.lastId() + 1,
-        name: body.name,
-        description: body.description,
-        stock: body.stock,
-      },
-    ];
-
-    return this.getId(this.lastId());
+  async insert(body: ProductDto): Promise<Product> {
+    const product = this.productRepository.create(body);
+    await this.productRepository.save(product);
+    return product;
   }
 
-  update(id: number, body: ProductDto): Product {
-    const product: Product = {
+  async update(
+    id: number,
+    body: ProductDto | ProductPatchDto,
+  ): Promise<Product> {
+    const inputProduct = {
       id,
-      name: body.name,
-      description: body.description,
-      stock: body.stock,
-    };
-
-    return this.updateObject(id, product);
-  }
-
-  private updateObject(id: number, product: Product) {
-    this.products = this.products.map((item) => {
-      return item.id == id ? product : item;
-    });
-
-    return this.getId(id);
-  }
-
-  patch(id: number, body: ProductPatchDto): Product {
-    const previousProduct = this.getId(id);
-
-    //això és que fa es possar en el newProduct tot ho de previousProduct i sobre escriure el que tingui en el body
-    const newProduct = {
-      ...previousProduct,
       ...body,
+    };
+    const product = await this.productRepository.preload(inputProduct);
+
+    if (product) {
+      return this.productRepository.save(product);
     }
 
-    return this.updateObject(id, newProduct);
-
+    throw new NotFoundException(`No he encontrado el producto con id ${id}`);
   }
 
-  delete(id: number): void {
-    this.products = this.products.filter((item) => item.id != id);
-  }
+  async delete(id: number): Promise<void> {
+    const product = await this.productRepository.findOne(id);
 
-  private lastId(): number {
-    return this.products[this.products.length - 1].id;
+    if (product) {
+      this.productRepository.remove(product);
+    }
+    throw new NotFoundException(`No se encontro el producto con id ${id}`);
   }
 }

@@ -10,12 +10,10 @@ import {
   Patch,
   Post,
   Put,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { ProductPatchDto } from './dto/product-patch.dto';
 import { ProductDto } from './dto/product.dto';
-import { Product } from './product.interface';
+import { Product } from './entities/product.entity';
 import { ProductsService } from './products.service';
 
 @Controller('products')
@@ -23,23 +21,22 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  getAll(): Product[] {
+  getAll(): Promise<Product[]> {
     return this.productsService.getAll();
   }
 
   @Get(':id')
-  find(
+  async find(
     @Param(
       'id',
       new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
     )
     id: number,
-  ): Product {
+  ): Promise<Product> {
     return this.productsService.getId(id);
   }
 
   @Post()
-  //@UsePipes(new ValidationPipe())
   async create(@Body() body: ProductDto): Promise<Product> {
     return this.productsService.insert(body);
   }
@@ -53,14 +50,13 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  patch(@Param('id') id: number, @Body() body: ProductPatchDto) {
-    return this.productsService.patch(id, body);
+  async patch(@Param('id') id: number, @Body() body: ProductPatchDto) {
+    return this.productsService.update(id, body);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  remove(@Param('id') id: number): string {
-    this.productsService.delete(id);
-    return `Borrado`;
+  async remove(@Param('id') id: number) {
+    return this.productsService.delete(id);
   }
 }
