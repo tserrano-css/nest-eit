@@ -1,5 +1,13 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Review } from './review.entity';
+import { Size } from './size.entity';
 
 @Entity('products')
 export class Product {
@@ -17,4 +25,8 @@ export class Product {
 
   @OneToMany(() => Review, (review) => review.product)
   reviews: Review[];
+
+  @ManyToMany(() => Size, (size) => size.products)
+  @JoinTable()
+  sizes: Size[];
 }
