@@ -4,12 +4,15 @@ import { Repository } from 'typeorm';
 import { ProductPatchDto } from './dto/product-patch.dto';
 import { ProductDto } from './dto/product.dto';
 import { Product } from './entities/product.entity';
+import { Size } from './entities/size.entity';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
+    @InjectRepository(Size)
+    private sizeRepository: Repository<Size>,
   ) {}
 
   getAll(): Promise<Product[]> {
@@ -25,7 +28,10 @@ export class ProductsService {
   }
 
   async insert(body: ProductDto): Promise<Product> {
-    const product = this.productRepository.create(body);
+    const sizes = await Promise.all(
+      body.sizes.map((size) => this.selectOrCreateSize(size)),
+    );
+    const product = this.productRepository.create({ ...body, sizes });
     await this.productRepository.save(product);
     return product;
   }
@@ -34,10 +40,18 @@ export class ProductsService {
     id: number,
     body: ProductDto | ProductPatchDto,
   ): Promise<Product> {
+    const sizes =
+      body.sizes && //Si existe product.sizes en el ProductPatchDto
+      (await Promise.all(
+        body.sizes.map((size) => this.selectOrCreateSize(size)),
+      ));
+
     const inputProduct = {
       id,
       ...body,
+      sizes,
     };
+
     const product = await this.productRepository.preload(inputProduct);
 
     if (product) {
@@ -54,5 +68,13 @@ export class ProductsService {
       this.productRepository.remove(product);
     }
     throw new NotFoundException(`No se encontro el producto con id ${id}`);
+  }
+
+  private async selectOrCreateSize(size: string): Promise<Size> {
+    const sizeEntity = await this.sizeRepository.findOne({ size });
+    if (sizeEntity) {
+      return sizeEntity;
+    }
+    return this.sizeRepository.create({ size });
   }
 }

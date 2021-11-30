@@ -6,7 +6,7 @@ export class Size {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('varchar', { lenght: 5 })
+  @Column('varchar', { length: 5 })
   size: string;
 
   @ManyToMany(() => Product, (product) => product.sizes)
