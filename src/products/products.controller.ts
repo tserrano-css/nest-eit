@@ -10,9 +10,11 @@ import {
   Patch,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ProductPatchDto } from './dto/product-patch.dto';
 import { ProductDto } from './dto/product.dto';
+import { QueryProductDto } from './dto/query-products.dto';
 import { Product } from './entities/product.entity';
 import { ProductsService } from './products.service';
 
@@ -21,8 +23,14 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  getAll(): Promise<Product[]> {
-    return this.productsService.getAll();
+  getAll(@Query() query: QueryProductDto): Promise<Product[]> {
+    const defaultQuery = {
+      limit: 10,
+      order: 'name',
+      query: '',
+    };
+    query = { ...defaultQuery, ...query };
+    return this.productsService.getAll(query);
   }
 
   @Get(':id')
